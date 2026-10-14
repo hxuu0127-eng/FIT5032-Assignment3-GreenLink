@@ -1,6 +1,6 @@
-```vue
 <template>
   <div class="app-container">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <header class="main-header">
       <h1>GreenLink Melbourne</h1>
       <p>Urban greening, tree planting and biodiversity</p>
@@ -13,7 +13,7 @@
       </div>
     </header>
 
-    <main>
+    <main id="main-content">
       <section v-if="!currentUser" class="auth-section">
         <h2>{{ authMode === 'login' ? 'Login' : 'Register' }}</h2>
 
@@ -23,6 +23,7 @@
             v-model.trim="accountName"
             type="text"
             placeholder="Full Name"
+            aria-label="Full name"
             maxlength="50"
           >
 
@@ -30,6 +31,7 @@
             v-model.trim="accountEmail"
             type="email"
             placeholder="Email Address"
+            aria-label="Email address"
             maxlength="100"
             required
           >
@@ -38,6 +40,7 @@
             v-model="accountPassword"
             type="password"
             placeholder="Password"
+            aria-label="Password"
             minlength="6"
             maxlength="100"
             required
@@ -57,7 +60,7 @@
             : 'Already have an account? Login' }}
         </button>
 
-        <p v-if="message" :class="messageType">
+        <p v-if="message" :class="messageType" role="status" aria-live="polite">
           {{ message }}
         </p>
       </section>
@@ -90,6 +93,8 @@
             </div>
           </div>
         </section>
+
+        <GeoActivities :events="events" />
 
         <section class="events-section">
           <h2>Upcoming Activities</h2>
@@ -291,6 +296,43 @@
           <p>{{ review.comment }}</p>
         </div>
       </section>
+      <section v-if="currentUser && !currentUser.emailVerified" class="data-section" aria-label="Verify your email">
+        <h2>Verify your email address</h2>
+        <p>Verify your account before sending an attachment email.</p>
+        <button type="button" @click="sendVerification">Send verification email</button>
+        <button type="button" @click="refreshVerification">I've verified — refresh status</button>
+        <p v-if="verificationStatus" role="status">{{ verificationStatus }}</p>
+      </section>
+
+      <!-- D.2: email with an attachment, sent by a server-side Cloud Function. -->
+      <section v-if="currentUser" class="data-section" aria-labelledby="email-heading">
+        <h2 id="email-heading">Email with Attachment</h2>
+        <p>Send a PDF, text file, or image to your signed-in email address.</p>
+        <form @submit.prevent="sendAttachmentEmail" class="email-form">
+          <label for="mail-to">Recipient (your verified account email)</label>
+          <input id="mail-to" :value="currentUser.email" type="email" disabled />
+          <label for="mail-subject">Subject</label>
+          <input id="mail-subject" v-model.trim="emailSubject" type="text" maxlength="120" required />
+          <label for="mail-message">Message</label>
+          <textarea id="mail-message" v-model.trim="emailBody" maxlength="2000" required></textarea>
+          <label for="mail-attachment">Attachment (PDF, PNG, JPEG or TXT; max 1 MB)</label>
+          <input id="mail-attachment" ref="emailFileInput" type="file" accept=".pdf,.png,.jpg,.jpeg,.txt,application/pdf,image/png,image/jpeg,text/plain" required @change="onEmailFileChange" />
+          <button type="submit" :disabled="emailSending">{{ emailSending ? 'Sending…' : 'Send Email' }}</button>
+          <p v-if="emailStatus" role="status" aria-live="polite">{{ emailStatus }}</p>
+        </form>
+      </section>
+
+      <section v-if="currentUser" class="data-section">
+        <h2>Activity Data</h2>
+        <DataTable title="Activities" :rows="eventRows" :columns="[
+          { key: 'name', label: 'Activity' }, { key: 'date', label: 'Date' },
+          { key: 'location', label: 'Location' }, { key: 'places', label: 'Places' }
+        ]" />
+        <DataTable title="Reviews" :rows="reviewRows" :columns="[
+          { key: 'user', label: 'User' }, { key: 'event', label: 'Activity' },
+          { key: 'rating', label: 'Rating' }, { key: 'comment', label: 'Comment' }
+        ]" />
+      </section>
     </main>
 
     <footer>
@@ -300,7 +342,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import app, { auth } from './firebase'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendEmailVerification, reload } from 'firebase/auth'
+import DataTable from './components/DataTable.vue'
+import GeoActivities from './components/GeoActivities.vue'
+import { getFunctions, httpsCallable } from 'firebase/functions'
 
 const events = ref([
   {
@@ -310,6 +357,7 @@ const events = ref([
     startTime: '9:00am',
     endTime: '12:00pm',
     location: 'Clayton',
+    lat: -37.925, lng: 145.119,
     address: 'Clayton Local Park',
     trees: 100,
     places: 40
@@ -321,6 +369,7 @@ const events = ref([
     startTime: '1:00pm',
     endTime: '4:00pm',
     location: 'Brunswick',
+    lat: -37.767, lng: 144.960,
     address: 'Brunswick Community Hub',
     trees: 80,
     places: 30
@@ -332,6 +381,7 @@ const events = ref([
     startTime: '8:00am',
     endTime: '11:00am',
     location: 'Sunshine',
+    lat: -37.789, lng: 144.832,
     address: 'Sunshine Environment Centre',
     trees: 50,
     places: 20
@@ -341,6 +391,65 @@ const events = ref([
 const users = ref([])
 const reviews = ref([])
 const currentUser = ref(null)
+
+// D.2 email form: attachment bytes are sent to the callable function, never to localStorage.
+const verificationStatus = ref('')
+async function sendVerification() {
+  try { await sendEmailVerification(auth.currentUser); verificationStatus.value = 'Verification email sent. Check your inbox.' }
+  catch (e) { verificationStatus.value = e.message }
+}
+async function refreshVerification() {
+  try {
+    await reload(auth.currentUser)
+    await auth.currentUser.getIdToken(true)
+    currentUser.value = { ...currentUser.value, emailVerified: auth.currentUser.emailVerified }
+    verificationStatus.value = auth.currentUser.emailVerified ? 'Email verified!' : 'Not verified yet. Check your inbox.'
+  } catch (e) { verificationStatus.value = e.message }
+}
+
+const emailSubject = ref('GreenLink Melbourne information')
+const emailBody = ref('Please see the attached file.')
+const emailAttachment = ref(null)
+const emailFileInput = ref(null)
+const emailSending = ref(false)
+const emailStatus = ref('')
+const functions = getFunctions(app, 'australia-southeast1')
+
+function onEmailFileChange(event) {
+  emailAttachment.value = event.target.files?.[0] || null
+  emailStatus.value = ''
+}
+
+async function sendAttachmentEmail() {
+  emailStatus.value = ''
+  const file = emailAttachment.value
+  if (!file) { emailStatus.value = 'Please choose a file.'; return }
+  const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'text/plain']
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  const expected = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', txt: 'text/plain' }
+  if (!allowed.includes(file.type) || expected[ext] !== file.type || file.size > 1024 * 1024) {
+    emailStatus.value = 'Only PDF, PNG, JPEG or TXT files up to 1 MB are supported.'
+    return
+  }
+  if (!currentUser.value?.emailVerified) { emailStatus.value = 'Verify your email first.'; return }
+  emailSending.value = true
+  try {
+    const data = await file.arrayBuffer()
+    const bytes = new Uint8Array(data)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i += 8192) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + 8192))
+    }
+    const send = httpsCallable(functions, 'sendAttachmentEmail')
+    await send({ subject: emailSubject.value, message: emailBody.value,
+      filename: file.name, mimeType: file.type, base64: btoa(binary) })
+    emailStatus.value = 'Email sent successfully. Check your inbox (and spam folder).'
+    emailAttachment.value = null
+    if (emailFileInput.value) emailFileInput.value.value = ''
+  } catch (error) {
+    emailStatus.value = `Email could not be sent: ${error.message || 'Unknown error'}`
+  } finally { emailSending.value = false }
+}
 
 const authMode = ref('login')
 const accountName = ref('')
@@ -368,35 +477,32 @@ const totalPlaces = computed(() =>
   events.value.reduce((total, event) => total + event.places, 0)
 )
 
+let unsubscribeAuth
 onMounted(() => {
-  const savedUsers = localStorage.getItem('greenlinkUsers')
-  const savedReviews = localStorage.getItem('greenlinkReviews')
-  const savedUser = localStorage.getItem('greenlinkCurrentUser')
-  const savedBooking = localStorage.getItem('greenlinkBooking')
-
-  users.value = savedUsers ? JSON.parse(savedUsers) : []
-  reviews.value = savedReviews ? JSON.parse(savedReviews) : []
-
-  if (!users.value.some(user => user.role === 'Admin')) {
-    users.value.push({
-      name: 'GreenLink Administrator',
-      email: 'admin@greenlink.com',
-      password: 'Admin123!',
-      role: 'Admin'
-    })
-
-    saveUsers()
-  }
-
-  if (savedUser) {
-    currentUser.value = JSON.parse(savedUser)
-  }
-
-  if (savedBooking) {
-    registeredUser.value = JSON.parse(savedBooking)
-    hasBooking.value = true
-  }
+  try {
+    reviews.value = JSON.parse(localStorage.getItem('greenlinkReviews') || '[]')
+  } catch { reviews.value = [] }
+  unsubscribeAuth = onAuthStateChanged(auth, user => {
+    currentUser.value = user ? {
+      uid: user.uid, name: user.displayName || user.email,
+      email: user.email, emailVerified: user.emailVerified, role: 'User'
+    } : null
+    if (!user) { hasBooking.value = false; return }
+    try {
+      const booking = JSON.parse(localStorage.getItem('greenlinkBooking') || 'null')
+      hasBooking.value = booking?.uid === user.uid
+      if (hasBooking.value) registeredUser.value = booking
+    } catch { hasBooking.value = false }
+  })
 })
+onUnmounted(() => unsubscribeAuth?.())
+
+const eventRows = computed(() => events.value.map(e => ({
+  name: e.name, date: e.date, location: e.location, places: e.places
+})))
+const reviewRows = computed(() => reviews.value.map(r => ({
+  user: r.user, event: r.event, rating: r.rating, comment: r.comment
+})))
 
 function saveUsers() {
   localStorage.setItem(
@@ -412,84 +518,29 @@ function saveReviews() {
   )
 }
 
-function registerAccount() {
+async function registerAccount() {
   message.value = ''
-
   const cleanName = accountName.value.trim()
-  const cleanEmail = accountEmail.value.trim().toLowerCase()
-
-  if (cleanName.length < 2) {
-    showMessage('Name must contain at least 2 characters.', 'error')
-    return
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-    showMessage('Please enter a valid email address.', 'error')
-    return
-  }
-
-  if (accountPassword.value.length < 6) {
-    showMessage('Password must be at least 6 characters.', 'error')
-    return
-  }
-
-  if (users.value.some(user => user.email === cleanEmail)) {
-    showMessage('This email is already registered.', 'error')
-    return
-  }
-
-  users.value.push({
-    name: cleanName,
-    email: cleanEmail,
-    password: accountPassword.value,
-    role: 'User'
-  })
-
-  saveUsers()
-
-  accountName.value = ''
-  accountEmail.value = ''
-  accountPassword.value = ''
-
-  showMessage('Registration successful. Please login.', 'success')
-  authMode.value = 'login'
+  if (cleanName.length < 2) return showMessage('Name must contain at least 2 characters.', 'error')
+  try {
+    const credential = await createUserWithEmailAndPassword(auth, accountEmail.value.trim(), accountPassword.value)
+    await updateProfile(credential.user, { displayName: cleanName })
+    currentUser.value = { uid: credential.user.uid, name: cleanName, email: credential.user.email, emailVerified: credential.user.emailVerified, role: 'User' }
+    await sendEmailVerification(credential.user)
+    accountPassword.value = ''
+    showMessage('Registration successful. Please verify your email.', 'success')
+  } catch (error) { showMessage(error.message, 'error') }
 }
-
-function login() {
-  const cleanEmail = accountEmail.value.trim().toLowerCase()
-
-  const user = users.value.find(
-    account =>
-      account.email === cleanEmail &&
-      account.password === accountPassword.value
-  )
-
-  if (!user) {
-    showMessage('Invalid email or password.', 'error')
-    return
-  }
-
-  currentUser.value = {
-    name: user.name,
-    email: user.email,
-    role: user.role
-  }
-
-  localStorage.setItem(
-    'greenlinkCurrentUser',
-    JSON.stringify(currentUser.value)
-  )
-
-  accountEmail.value = ''
-  accountPassword.value = ''
-
-  showMessage('Login successful.', 'success')
+async function login() {
+  try {
+    await signInWithEmailAndPassword(auth, accountEmail.value.trim(), accountPassword.value)
+    accountPassword.value = ''
+    showMessage('Login successful.', 'success')
+  } catch (error) { showMessage(error.message, 'error') }
 }
-
-function logout() {
-  currentUser.value = null
-  localStorage.removeItem('greenlinkCurrentUser')
-  hasBooking.value = false
+async function logout() {
+  await signOut(auth)
+  showMessage('Logged out.', 'success')
 }
 
 function register() {
@@ -525,7 +576,8 @@ function register() {
   registeredUser.value = {
     name: cleanName,
     email: cleanEmail,
-    event: selectedEvent.value
+    event: selectedEvent.value,
+    uid: currentUser.value.uid
   }
 
   localStorage.setItem(
@@ -618,4 +670,3 @@ function showMessage(text, type) {
   messageType.value = type
 }
 </script>
-```
