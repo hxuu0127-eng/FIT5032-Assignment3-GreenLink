@@ -1,0 +1,627 @@
+* {
+  box-sizing: border-box;
+}
+
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f7f3;
+  color: #26352b;
+  line-height: 1.6;
+}
+
+
+/* Header */
+
+header {
+  background: #315c3a;
+  color: white;
+  padding: 30px;
+  text-align: center;
+}
+
+
+header h1 {
+  margin: 0;
+}
+
+
+header .subtitle {
+  margin-top: 8px;
+}
+
+
+/* Main */
+
+main {
+  max-width: 1000px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+
+section {
+  margin-bottom: 35px;
+}
+
+
+/* Introduction */
+
+.intro-section {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px #ccc;
+}
+
+
+.stats-bar {
+  display: flex;
+  gap: 20px;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+
+.stat-item {
+  text-align: center;
+  padding: 15px;
+}
+
+
+.stat-item strong {
+  display: block;
+  font-size: 26px;
+  color: #315c3a;
+}
+
+
+/* Events */
+
+.events {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+
+.events-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(280px, 1fr)
+    );
+  gap: 20px;
+}
+
+
+.event-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px #ccc;
+  min-width: 250px;
+}
+
+
+.event-card.sold-out {
+  opacity: 0.7;
+}
+
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+
+.card-header h3 {
+  margin-top: 0;
+}
+
+
+.status-tag {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+
+.status-tag.available {
+  background: #d1e7dd;
+  color: #155724;
+}
+
+
+.status-tag.full {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+
+.card-body {
+  margin-top: 10px;
+}
+
+
+.desc {
+  color: #4b5a50;
+}
+
+
+.meta-info p {
+  margin: 7px 0;
+}
+
+
+.event-rating {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+}
+
+
+.places-left {
+  font-size: 14px;
+}
+
+
+/* Badge */
+
+.badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: #d9ead3;
+  color: #315c3a;
+  font-size: 13px;
+}
+
+
+/* Booking */
+
+.booking {
+  background: white;
+  margin-top: 30px;
+  padding: 25px;
+  border-radius: 8px;
+}
+
+
+.booking-section {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px #ccc;
+}
+
+
+.booking-form {
+  margin-top: 20px;
+}
+
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 15px;
+}
+
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #315c3a;
+  border-color: #315c3a;
+}
+
+
+textarea {
+  resize: vertical;
+}
+
+
+button {
+  padding: 10px 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid #315c3a;
+  background: #315c3a;
+  color: white;
+}
+
+
+button:hover {
+  opacity: 0.9;
+}
+
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* Password */
+
+.password-input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+
+.password-input-wrapper input {
+  padding-right: 50px;
+}
+
+
+.btn-toggle-password {
+  position: absolute;
+  right: 5px;
+  top: 3px;
+  margin-top: 0;
+  padding: 7px 10px;
+  background: transparent;
+  color: #315c3a;
+  border: none;
+}
+
+
+/* Authentication */
+
+.auth-section {
+  margin-bottom: 35px;
+}
+
+
+.auth-box {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 25px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px #ccc;
+}
+
+
+.auth-form {
+  margin-top: 20px;
+}
+
+
+.auth-switch {
+  text-align: center;
+}
+
+
+.auth-switch button {
+  background: transparent;
+  color: #315c3a;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+}
+
+
+.user-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+
+.btn-logout {
+  margin-top: 0;
+  background: white;
+  color: #315c3a;
+}
+
+
+/* Current Booking */
+
+.current-booking-box {
+  padding: 20px;
+  background: #edf6ed;
+  border-radius: 8px;
+  border: 1px solid #c9ddc9;
+}
+
+
+.btn-cancel {
+  background: #a94442;
+  border-color: #a94442;
+}
+
+
+/* Login Required */
+
+.login-required {
+  padding: 15px;
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  border-radius: 8px;
+}
+
+
+/* Rating */
+
+.reviews-section {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px #ccc;
+}
+
+
+.review-form {
+  margin-top: 20px;
+}
+
+
+.rating-summary {
+  margin-top: 30px;
+}
+
+
+.rating-card {
+  padding: 18px;
+  margin-top: 12px;
+  background: #f5f8f5;
+  border: 1px solid #dce5dc;
+  border-radius: 8px;
+}
+
+
+.stars {
+  letter-spacing: 2px;
+}
+
+
+.review-list {
+  margin-top: 30px;
+}
+
+
+.review-card {
+  margin-top: 12px;
+  padding: 18px;
+  background: #f5f8f5;
+  border: 1px solid #dce5dc;
+  border-radius: 8px;
+}
+
+
+.review-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+
+.review-comment {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+
+/* Admin */
+
+.admin-section {
+  margin-top: 35px;
+  padding: 25px;
+  background: white;
+  border: 2px solid #315c3a;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px #ccc;
+}
+
+
+.admin-stats {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(160px, 1fr)
+    );
+  gap: 15px;
+  margin: 20px 0;
+}
+
+
+.admin-stat {
+  padding: 20px;
+  text-align: center;
+  background: #f5f8f5;
+  border-radius: 8px;
+}
+
+
+.admin-stat strong {
+  display: block;
+  font-size: 28px;
+  color: #315c3a;
+}
+
+
+.admin-stat span {
+  display: block;
+}
+
+
+.user-table-wrapper {
+  overflow-x: auto;
+}
+
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+
+.user-table th,
+.user-table td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+
+.user-table th {
+  background: #f0f4ef;
+}
+
+
+/* Messages */
+
+.message {
+  margin-top: 15px;
+}
+
+
+.message-banner {
+  margin-top: 15px;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+
+.message-banner.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+
+.message-banner.success {
+  background: #d1e7dd;
+  color: #155724;
+}
+
+
+.message-banner.info {
+  background: #cff4fc;
+  color: #055160;
+}
+
+
+/* Gallery */
+
+.gallery-placeholder {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(250px, 1fr)
+    );
+  gap: 15px;
+}
+
+
+.gallery-item {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px #ccc;
+}
+
+
+/* Footer */
+
+.main-footer {
+  padding: 25px;
+  margin-top: 40px;
+  background: #315c3a;
+  color: white;
+  text-align: center;
+}
+
+
+.main-footer p {
+  margin: 5px 0;
+}
+
+
+/* Mobile */
+
+@media (max-width: 600px) {
+
+  header {
+    padding: 20px 10px;
+  }
+
+
+  main {
+    margin-top: 20px;
+    padding: 0 10px;
+  }
+
+
+  .events {
+    display: block;
+  }
+
+
+  .event-card {
+    margin-bottom: 15px;
+  }
+
+
+  .stats-bar {
+    flex-direction: column;
+  }
+
+
+  .user-bar {
+    flex-direction: column;
+  }
+
+
+  .review-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+
+  .auth-box,
+  .booking-section,
+  .reviews-section,
+  .admin-section,
+  .intro-section {
+    padding: 18px;
+  }
+
+}
+/* E.3 keyboard access and visible focus */
+.skip-link{position:absolute;left:12px;top:-90px;background:#fff;color:#173e27;padding:12px;z-index:1000;border:3px solid #173e27}
+.skip-link:focus{top:10px}
+:where(a,button,input,select,textarea):focus-visible{outline:3px solid #b45309!important;outline-offset:3px}
+button:disabled{cursor:not-allowed;opacity:.65}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
