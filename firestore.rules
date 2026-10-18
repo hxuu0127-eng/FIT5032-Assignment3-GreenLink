@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function admin() { return signedIn() && request.auth.token.admin == true; }
+    match /users/{uid} {
+      allow read: if admin() || (signedIn() && request.auth.uid == uid);
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['displayName','email','createdAt'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 2
+        && request.resource.data.displayName.size() <= 50
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+    match /events/{id} {
+      allow read: if admin() || resource.data.status == 'published';
+      allow write: if false; // Trusted backend/Admin SDK only
+    }
+    match /bookings/{uid} {
+      allow read: if admin() || (signedIn() && request.auth.uid == uid);
+      allow write: if false; // Transactions through callable functions
+
+      match /items/{eventId} {
+        allow read: if admin() || (signedIn() && request.auth.uid == uid);
+        allow write: if false; // Managed by Cloud Functions
+      }
+    }
+    match /reviews/{id} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['userId','user','event','eventId','rating','comment','createdAt'])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.user is string
+        && request.resource.data.user.size() <= 100
+        && request.resource.data.event is string
+        && request.resource.data.event.size() <= 150
+        && request.resource.data.eventId is string
+        && request.resource.data.eventId.size() <= 150
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() >= 5 && request.resource.data.comment.size() <= 2000
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+  }
+}

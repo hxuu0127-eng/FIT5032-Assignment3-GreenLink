@@ -1,0 +1,11 @@
+# GreenLink Firestore HD setup
+
+1. In Firebase Console > Firestore > Data, add an `events` document with ID `tree-planting-001`: `name` (string), `description` (string), `date` (string), `startTime` (string), `endTime` (string), `location` (string), `address` (string), `trees` (number), `capacity` (number, 20), `bookedCount` (number, 0), `status` (string, `published`). `places` is optional and used only as a fallback for legacy records. Add latitude/longitude if needed for map features.
+2. Configure `.env.local` from `.env.example` with your Firebase web app settings; never commit private secrets.
+3. From project root: `npm install`; `npm run build`; `firebase login`; `firebase use greenlink-melbourne-78303`; `firebase deploy --only firestore:rules`.
+4. Firebase callable Functions require the appropriate billing plan. Run `cd functions && npm install && cd ..`; deploy with `firebase deploy --only functions:createBooking,functions:cancelBooking`.
+5. Start `npm run dev`, log in and test live activities, booking and cancellation using two accounts. `users` docs are created on new registration; existing users may not yet have profiles. Review submission writes to Firestore. No localStorage fallback is used for bookings or reviews.
+6. Admin Dashboard requires a trusted server to set Firebase Authentication custom claim `{admin:true}` on the intended account. Never expose a service account key or grant admin through browser code. After setting the claim, sign out/in to refresh the token. The dashboard displays users from Firestore `users` documents, not all Auth accounts; admin statistics are not guaranteed complete until profiles are backfilled.
+7. InsightsPanel reads events and reviews passed down from App.vue, now sourced from Firestore. The chart is still based on live snapshots, but its existing presentation must be assessed against the HD rubric.
+8. Firestore Rules: review creates are authenticated but currently do not verify the referenced event exists or enforce rate limits. For production, add server-side validation/moderation and abuse controls. The public reviews collection contains display names/comments: avoid sensitive personal data.
+9. These changes are not yet deployed to your account. Verify build and emulator tests before submission. Do not claim full WCAG AA or HD rubric completion based on this patch alone.

@@ -625,3 +625,93 @@ button:disabled {
 :where(a,button,input,select,textarea):focus-visible{outline:3px solid #b45309!important;outline-offset:3px}
 button:disabled{cursor:not-allowed;opacity:.65}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+/* E.3 Accessibility Improvements */
+
+/* Make keyboard focus clear and consistent */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #b45309 !important;
+  outline-offset: 3px;
+}
+
+/* Make labels and form instructions easier to read */
+label {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: #26352b;
+}
+
+input,
+select,
+textarea,
+button {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+input,
+select,
+textarea {
+  min-height: 44px;
+}
+
+textarea {
+  min-height: 100px;
+}
+
+/* Accessible disabled state */
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Clear messages without relying on colour alone */
+[role="alert"],
+[role="status"] {
+  overflow-wrap: anywhere;
+}
+
+/* Avoid long content breaking mobile layouts */
+.app-container,
+main,
+section {
+  min-width: 0;
+}
+
+.event-card,
+.admin-item {
+  overflow-wrap: anywhere;
+}
+
+/* Support mobile screens and browser zoom */
+@media (max-width: 600px) {
+  .events-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .user-bar {
+    flex-wrap: wrap;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    max-width: 100%;
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
